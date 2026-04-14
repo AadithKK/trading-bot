@@ -1,0 +1,60 @@
+{
+  "account": {
+    "starting_balance_usd": 300.0,
+    "max_open_positions": 3,
+    "min_trade_size_usd": 6.0,
+    "max_trade_size_usd": 15.0,
+    "leverage_allowed": false
+  },
+  "watchlist": ["AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "META", "SPY"],
+  "market_hours": {
+    "run_at_hour_et": 9,
+    "run_at_minute_et": 20,
+    "market_open_hour_et": 9,
+    "market_open_minute_et": 30,
+    "close_hour_et": 16,
+    "close_minute_et": 0,
+    "check_market_hours": true,
+    "allow_premarket": true
+  },
+  "signal_thresholds": {
+    "rsi_bullish_min": 45,
+    "rsi_bullish_max": 70,
+    "rsi_bearish_max": 55,
+    "rsi_overbought": 75,
+    "rsi_oversold": 25,
+    "rsi_period": 14,
+    "volume_spike_multiplier": 1.5,
+    "volume_rolling_window": 20,
+    "trend_sma_short": 20,
+    "trend_sma_long": 50,
+    "volatility_atr_period": 14,
+    "volatility_high_threshold": 0.03,
+    "volatility_low_threshold": 0.01,
+    "min_signal_strength_for_claude": 60
+  },
+  "scoring_weights": {
+    "base": 50,
+    "trend_alignment": 30,
+    "rsi_alignment": 15,
+    "volume_confirmation": 15,
+    "high_volatility_penalty": -25,
+    "mixed_signals_penalty": -20
+  },
+  "claude": {
+    "model": "claude-sonnet-4-6",
+    "max_tokens": 512,
+    "temperature": 0,
+    "min_strength_threshold": 70
+  },
+  "feedback": {
+    "min_trades_for_analysis": 10,
+    "rsi_adjustment_step": 2,
+    "win_rate_target": 0.55,
+    "auto_apply_adjustments": false
+  },
+  "execution": {
+    "slippage_pct": 0.001,
+    "commission_per_trade_usd": 0.0
+  }
+}

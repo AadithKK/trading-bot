@@ -1,0 +1,204 @@
+CLAUDE PAPER TRADING SYSTEM SPECIFICATION
+
+OVERVIEW
+This system is a structured paper trading framework starting with 100 dollars. It uses deterministic rule-based market analysis combined with Claude as a signal filtering layer. The system is designed to minimize risk, avoid overtrading, and improve performance through statistical feedback rather than AI self-learning.
+
+PRIMARY OBJECTIVE
+Grow and manage a 100 dollar paper trading portfolio using controlled risk per trade, structured market signals, and strict execution rules.
+
+CORE PRINCIPLES
+1. Do not rely on AI prediction of prices
+2. Use deterministic rule-based signal generation
+3. Use Claude only as a filtering and ranking system
+4. Prioritize capital preservation over profit
+5. Avoid overtrading at all costs
+6. Use feedback data to adjust thresholds over time
+
+INITIAL ACCOUNT SETTINGS
+Starting balance: 100 dollars
+Maximum risk per trade: 2 to 5 dollars
+Maximum open positions: 1 to 3
+Leverage: not allowed
+Trading type: paper trading only
+
+WATCHLIST
+AAPL
+MSFT
+NVDA
+TSLA
+AMZN
+META
+SPY
+
+MARKET DATA COLLECTION MODULE
+For each symbol collect the following data points:
+
+1. Current price
+2. Short term trend classification (uptrend, downtrend, sideways)
+3. RSI value (0 to 100)
+4. Volatility classification (low, medium, high)
+5. Volume change indicator (normal or spike)
+6. Optional: simple moving average direction (above or below SMA trend line)
+
+DATA PROCESSING RULES
+All raw market data must be normalized into structured format before being passed into the signal engine.
+
+Example normalized object:
+
+{
+  "symbol": "AAPL",
+  "price": 190.25,
+  "trend": "uptrend",
+  "rsi": 62,
+  "volatility": "medium",
+  "volume_spike": true
+}
+
+SIGNAL GENERATION ENGINE (NO AI)
+This module is fully deterministic and does not use Claude.
+
+BULLISH SIGNAL CONDITIONS
+- trend is uptrend
+- RSI between 45 and 70
+- volume spike OR consistent upward movement
+- volatility is not high unless trend strength is strong
+
+BEARISH SIGNAL CONDITIONS
+- trend is downtrend
+- RSI below 55
+- confirmed downward momentum in price movement
+
+NEUTRAL OR IGNORE CONDITIONS
+- RSI above 75 or below 25
+- volatility is high with no clear trend
+- conflicting trend indicators
+- weak or inconsistent volume behavior
+
+SIGNAL OUTPUT FORMAT
+Each stock produces:
+
+{
+  "symbol": "AAPL",
+  "signal": "bullish | bearish | neutral",
+  "strength": 0 to 100
+}
+
+Strength scoring rules:
+Base 50 points
+Trend alignment +30
+RSI alignment +15
+Volume confirmation +15
+High volatility -25
+Mixed signals -20
+
+CLAUDE FILTER MODULE
+Claude receives ONLY filtered signals. It does not receive raw market data.
+
+INPUT FORMAT TO CLAUDE:
+
+[
+  {
+    "symbol": "AAPL",
+    "signal": "bullish",
+    "strength": 82
+  }
+]
+
+CLAUDE ROLE DEFINITION
+Claude acts as a risk-controlled trade selector.
+
+Claude responsibilities:
+- select best 1 to 3 trades
+- reject weak setups
+- enforce discipline
+- prevent overtrading
+- prioritize stability over returns
+
+CLAUDE DECISION RULES
+- Only accept trades with strength above 70 unless exceptional structure
+- If signals are conflicting, reject trade
+- If uncertainty exists, output HOLD
+- Maximum 3 trades per execution cycle
+- Prefer fewer high quality trades over many weak trades
+
+ACCOUNT AWARENESS RULES FOR CLAUDE
+Claude must assume:
+Starting capital is 100 dollars
+Each trade risk is 2 to 5 percent of account
+Capital preservation is more important than growth
+Loss prevention is higher priority than profit maximization
+
+CLAUDE OUTPUT FORMAT (STRICT)
+Claude must output ONLY valid JSON with no extra text:
+
+{
+  "trades": [
+    {
+      "symbol": "",
+      "action": "BUY | SELL | HOLD",
+      "confidence": 0,
+      "position_size_usd": 2 to 5,
+      "reason": "short explanation max 20 words"
+    }
+  ]
+}
+
+EXECUTION ENGINE (PAPER TRADING)
+Trades are executed using a paper trading broker API such as Alpaca.
+
+Execution rules:
+- convert dollar size into share quantity
+- reject trades exceeding risk limits
+- ensure no duplicate positions per symbol
+- confirm order validity before execution
+
+MEMORY AND LOGGING SYSTEM
+Every trade must be stored in persistent storage (JSON or CSV):
+
+Fields:
+symbol
+action
+entry price
+exit price
+position size
+profit or loss percentage
+signal strength
+reason
+win or loss outcome
+
+LEARNING FEEDBACK LOOP
+After each full trading cycle:
+
+1. Calculate win rate
+2. Analyze performance by:
+   - RSI ranges
+   - trend conditions
+   - volatility levels
+3. Adjust signal thresholds slightly based on performance data
+
+ADJUSTMENT EXAMPLES
+If RSI 60-70 consistently loses:
+reduce RSI acceptance range
+
+If high volatility causes losses:
+reduce high volatility trades
+
+If certain trend conditions perform well:
+increase weight for those conditions
+
+RISK MANAGEMENT RULES
+- Never exceed defined risk per trade
+- Always prefer holding over uncertain trades
+- Do not increase trade frequency after losses
+- Avoid emotional reaction to performance
+- Keep execution consistent
+
+FAILSAFE RULES
+If system confidence is low:
+default to no trade
+If data is missing:
+skip symbol
+If signals conflict:
+reject trade
+
+END OF SPECIFICATION

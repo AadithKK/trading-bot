@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Secrets
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs (keep system.log in repo for the dashboard to show history)
+# logs/ is intentionally tracked
+
+# Temporary files
+data/pending_signals.json
+data/pending_decisions.json
+
+# Claude Code local settings
+.claude/

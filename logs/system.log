@@ -1,0 +1,87 @@
+2026-04-13 23:22:34  INFO      main — ============================================================
+2026-04-13 23:22:34  INFO      main — Trading cycle starting
+2026-04-13 23:22:34  INFO      main — Portfolio loaded — cash: $300.00, open positions: 0
+2026-04-13 23:22:35  INFO      main — Fetching market data for all watchlist symbols...
+2026-04-13 23:22:36  INFO      modules.market_data — AAPL: price=259.2 rsi=53.15 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:22:36  INFO      modules.market_data — MSFT: price=384.37 rsi=52.21 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:22:36  INFO      modules.market_data — NVDA: price=189.31 rsi=61.86 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:22:36  INFO      modules.market_data — TSLA: price=352.42 rsi=39.08 trend=downtrend vol=high vol_spike=False
+2026-04-13 23:22:37  INFO      modules.market_data — AMZN: price=239.89 rsi=72.47 trend=uptrend vol=medium vol_spike=False
+2026-04-13 23:22:37  INFO      modules.market_data — META: price=634.53 rsi=58.83 trend=sideways vol=high vol_spike=False
+2026-04-13 23:22:37  INFO      modules.market_data — SPY: price=686.1 rsi=63.79 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:22:37  INFO      main — Market data collected: 7/7 symbols
+2026-04-13 23:22:37  INFO      modules.signal_engine — AAPL: signal=neutral strength=50
+2026-04-13 23:22:37  INFO      modules.signal_engine — MSFT: signal=neutral strength=50
+2026-04-13 23:22:37  INFO      modules.signal_engine — NVDA: signal=neutral strength=50
+2026-04-13 23:22:37  INFO      modules.signal_engine — TSLA: signal=bearish strength=70
+2026-04-13 23:22:37  INFO      modules.signal_engine — AMZN: signal=neutral strength=50
+2026-04-13 23:22:37  INFO      modules.signal_engine — META: signal=neutral strength=25
+2026-04-13 23:22:37  INFO      modules.signal_engine — SPY: signal=neutral strength=50
+2026-04-13 23:22:37  INFO      modules.signal_engine — Signal filter: 1/7 symbols passed (min_strength=60)
+2026-04-13 23:22:38  INFO      main — Sending 1 signal(s) to Claude for review...
+2026-04-13 23:22:39  INFO      httpx — HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 401 Unauthorized"
+2026-04-13 23:22:39  ERROR     modules.claude_filter — Claude API error 401: Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'invalid x-api-key'}, 'request_id': 'req_011Ca32NWsLTi1RRhU6fbBNr'}
+2026-04-13 23:22:39  INFO      main — Claude returned no actionable trades — HOLD this cycle
+2026-04-13 23:22:39  INFO      modules.feedback_analyzer — Feedback skipped — only 0 closed trades (need 10)
+2026-04-13 23:22:39  INFO      modules.signal_engine — AAPL: signal=neutral strength=50
+2026-04-13 23:22:39  INFO      modules.signal_engine — MSFT: signal=neutral strength=50
+2026-04-13 23:22:39  INFO      modules.signal_engine — NVDA: signal=neutral strength=50
+2026-04-13 23:22:39  INFO      modules.signal_engine — TSLA: signal=bearish strength=70
+2026-04-13 23:22:39  INFO      modules.signal_engine — AMZN: signal=neutral strength=50
+2026-04-13 23:22:39  INFO      modules.signal_engine — META: signal=neutral strength=25
+2026-04-13 23:22:39  INFO      modules.signal_engine — SPY: signal=neutral strength=50
+2026-04-13 23:22:39  INFO      main — ============================================================
+2026-04-13 23:22:39  INFO      main — CYCLE SUMMARY
+2026-04-13 23:22:39  INFO      main —   Symbols processed  : 7
+2026-04-13 23:22:39  INFO      main —   Signals generated  : 7
+2026-04-13 23:22:39  INFO      main —   Signals to Claude  : 1
+2026-04-13 23:22:39  INFO      main —   Trades executed    : 0
+2026-04-13 23:22:39  INFO      main —   Open positions     : 0
+2026-04-13 23:22:39  INFO      main —   Cash               : $300.00
+2026-04-13 23:22:39  INFO      main —   Portfolio value    : $300.00
+2026-04-13 23:22:39  INFO      main —   Total P&L          : $+0.00
+2026-04-13 23:22:39  INFO      main — ============================================================
+2026-04-13 23:27:52  INFO      generate_signals — ============================================================
+2026-04-13 23:27:52  INFO      generate_signals — generate-signals: starting
+2026-04-13 23:27:54  INFO      generate_signals — Fetching market data...
+2026-04-13 23:27:55  INFO      modules.market_data — AAPL: price=259.2 rsi=53.15 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:27:56  INFO      modules.market_data — MSFT: price=384.37 rsi=52.21 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:27:56  INFO      modules.market_data — NVDA: price=189.31 rsi=61.86 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:27:56  INFO      modules.market_data — TSLA: price=352.42 rsi=39.08 trend=downtrend vol=high vol_spike=False
+2026-04-13 23:27:56  INFO      modules.market_data — AMZN: price=239.89 rsi=72.47 trend=uptrend vol=medium vol_spike=False
+2026-04-13 23:27:57  INFO      modules.market_data — META: price=634.53 rsi=58.83 trend=sideways vol=high vol_spike=False
+2026-04-13 23:27:57  INFO      modules.market_data — SPY: price=686.1 rsi=63.79 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:27:57  INFO      modules.signal_engine — AAPL: signal=neutral strength=50
+2026-04-13 23:27:57  INFO      modules.signal_engine — MSFT: signal=neutral strength=50
+2026-04-13 23:27:57  INFO      modules.signal_engine — NVDA: signal=neutral strength=50
+2026-04-13 23:27:57  INFO      modules.signal_engine — TSLA: signal=bearish strength=70
+2026-04-13 23:27:57  INFO      modules.signal_engine — AMZN: signal=neutral strength=50
+2026-04-13 23:27:57  INFO      modules.signal_engine — META: signal=neutral strength=25
+2026-04-13 23:27:57  INFO      modules.signal_engine — SPY: signal=neutral strength=50
+2026-04-13 23:27:57  INFO      modules.signal_engine — Signal filter: 1/7 symbols passed (min_strength=60)
+2026-04-13 23:28:10  INFO      generate_signals — ============================================================
+2026-04-13 23:28:10  INFO      generate_signals — generate-signals: starting
+2026-04-13 23:28:11  INFO      generate_signals — Fetching market data...
+2026-04-13 23:28:12  INFO      modules.market_data — AAPL: price=259.2 rsi=53.15 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:28:12  INFO      modules.market_data — MSFT: price=384.37 rsi=52.21 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:28:12  INFO      modules.market_data — NVDA: price=189.31 rsi=61.86 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:28:13  INFO      modules.market_data — TSLA: price=352.42 rsi=39.08 trend=downtrend vol=high vol_spike=False
+2026-04-13 23:28:13  INFO      modules.market_data — AMZN: price=239.89 rsi=72.47 trend=uptrend vol=medium vol_spike=False
+2026-04-13 23:28:13  INFO      modules.market_data — META: price=634.53 rsi=58.83 trend=sideways vol=high vol_spike=False
+2026-04-13 23:28:13  INFO      modules.market_data — SPY: price=686.1 rsi=63.79 trend=sideways vol=medium vol_spike=False
+2026-04-13 23:28:13  INFO      modules.signal_engine — AAPL: signal=neutral strength=50
+2026-04-13 23:28:13  INFO      modules.signal_engine — MSFT: signal=neutral strength=50
+2026-04-13 23:28:13  INFO      modules.signal_engine — NVDA: signal=neutral strength=50
+2026-04-13 23:28:13  INFO      modules.signal_engine — TSLA: signal=bearish strength=70
+2026-04-13 23:28:13  INFO      modules.signal_engine — AMZN: signal=neutral strength=50
+2026-04-13 23:28:13  INFO      modules.signal_engine — META: signal=neutral strength=25
+2026-04-13 23:28:13  INFO      modules.signal_engine — SPY: signal=neutral strength=50
+2026-04-13 23:28:13  INFO      modules.signal_engine — Signal filter: 1/7 symbols passed (min_strength=60)
+2026-04-13 23:28:13  INFO      generate_signals — Signals saved → 1/7 qualified (strength >= 60)
+2026-04-13 23:28:13  INFO      generate_signals — Pending signals file: C:\Users\kanno\OneDrive\Desktop\AI STUFF\Trading BOt\data\pending_signals.json
+2026-04-13 23:28:13  INFO      generate_signals — Qualified signals for Claude review:
+2026-04-13 23:28:13  INFO      generate_signals —   TSLA   bearish   strength=70  rsi=39.08  trend=downtrend  vol=high
+2026-04-13 23:28:48  INFO      execute_decisions — ============================================================
+2026-04-13 23:28:48  INFO      execute_decisions — execute-decisions: starting
+2026-04-13 23:28:48  INFO      execute_decisions — Claude provided no trades — HOLD this cycle
+2026-04-13 23:28:48  INFO      execute_decisions — Portfolio: cash=$300.00  value=$300.00  positions=0
