@@ -2,6 +2,13 @@
 
 A fully local, desktop-based paper trading system using Ollama for AI decision support.
 
+## 📊 Live Dashboard
+
+**View your portfolio from anywhere:**  
+🔗 **[Trading Bot Dashboard](https://aadithkk.github.io/trading-bot/)**
+
+Real-time monitoring of your portfolio, open positions, trades, and signals. Auto-updates every 60 seconds. Mobile responsive dark theme dashboard.
+
 ## Quick Start
 
 ### 1. Install Python Dependencies
