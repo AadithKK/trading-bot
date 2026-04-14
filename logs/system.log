@@ -85,3 +85,37 @@
 2026-04-13 23:28:48  INFO      execute_decisions — execute-decisions: starting
 2026-04-13 23:28:48  INFO      execute_decisions — Claude provided no trades — HOLD this cycle
 2026-04-13 23:28:48  INFO      execute_decisions — Portfolio: cash=$300.00  value=$300.00  positions=0
+2026-04-14 13:25:37  INFO      generate_signals — ============================================================
+2026-04-14 13:25:37  INFO      generate_signals — generate-signals: starting
+2026-04-14 13:25:38  INFO      generate_signals — Fetching market data...
+2026-04-14 13:25:38  ERROR     yfinance — Failed to get ticker 'AAPL' reason: Failed to perform, curl: (56) CONNECT tunnel failed, response 403. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-04-14 13:25:38  WARNING   modules.market_data — AAPL: fetch failed — Failed to perform, curl: (56) CONNECT tunnel failed, response 403. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-04-14 13:25:38  WARNING   modules.market_data — AAPL: skipped (no data)
+2026-04-14 13:25:38  ERROR     yfinance — Failed to get ticker 'MSFT' reason: Failed to perform, curl: (56) CONNECT tunnel failed, response 403. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-04-14 13:25:38  WARNING   modules.market_data — MSFT: fetch failed — Failed to perform, curl: (56) CONNECT tunnel failed, response 403. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-04-14 13:25:38  WARNING   modules.market_data — MSFT: skipped (no data)
+2026-04-14 13:25:38  ERROR     yfinance — Failed to get ticker 'NVDA' reason: Failed to perform, curl: (56) CONNECT tunnel failed, response 403. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-04-14 13:25:38  ERROR     yfinance — $NVDA: possibly delisted; no price data found  (period=60d)
+2026-04-14 13:25:38  WARNING   modules.market_data — NVDA: insufficient data (0 bars)
+2026-04-14 13:25:38  WARNING   modules.market_data — NVDA: skipped (no data)
+2026-04-14 13:25:38  ERROR     yfinance — Failed to get ticker 'TSLA' reason: Failed to perform, curl: (56) CONNECT tunnel failed, response 403. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-04-14 13:25:38  ERROR     yfinance — $TSLA: possibly delisted; no price data found  (period=60d)
+2026-04-14 13:25:38  WARNING   modules.market_data — TSLA: insufficient data (0 bars)
+2026-04-14 13:25:38  WARNING   modules.market_data — TSLA: skipped (no data)
+2026-04-14 13:25:38  ERROR     yfinance — Failed to get ticker 'AMZN' reason: Failed to perform, curl: (56) CONNECT tunnel failed, response 403. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-04-14 13:25:38  ERROR     yfinance — $AMZN: possibly delisted; no price data found  (period=60d)
+2026-04-14 13:25:38  WARNING   modules.market_data — AMZN: insufficient data (0 bars)
+2026-04-14 13:25:38  WARNING   modules.market_data — AMZN: skipped (no data)
+2026-04-14 13:25:38  ERROR     yfinance — Failed to get ticker 'META' reason: Failed to perform, curl: (56) CONNECT tunnel failed, response 403. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-04-14 13:25:38  ERROR     yfinance — $META: possibly delisted; no price data found  (period=60d)
+2026-04-14 13:25:38  WARNING   modules.market_data — META: insufficient data (0 bars)
+2026-04-14 13:25:38  WARNING   modules.market_data — META: skipped (no data)
+2026-04-14 13:25:38  ERROR     yfinance — Failed to get ticker 'SPY' reason: Failed to perform, curl: (56) CONNECT tunnel failed, response 403. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-04-14 13:25:38  ERROR     yfinance — $SPY: possibly delisted; no price data found  (period=60d)
+2026-04-14 13:25:38  WARNING   modules.market_data — SPY: insufficient data (0 bars)
+2026-04-14 13:25:38  WARNING   modules.market_data — SPY: skipped (no data)
+2026-04-14 13:25:38  WARNING   generate_signals — No market data — cannot generate signals
+2026-04-14 13:25:59  INFO      execute_decisions — ============================================================
+2026-04-14 13:25:59  INFO      execute_decisions — execute-decisions: starting
+2026-04-14 13:25:59  INFO      execute_decisions — Claude provided no trades — HOLD this cycle
+2026-04-14 13:25:59  INFO      execute_decisions — Portfolio: cash=$300.00  value=$300.00  positions=0
