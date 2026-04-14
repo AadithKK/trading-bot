@@ -1,60 +1,85 @@
 {
-  "account": {
-    "starting_balance_usd": 300.0,
+  "trading": {
+    "mode": "paper",
+    "starting_balance": 10000,
     "max_open_positions": 3,
-    "min_trade_size_usd": 6.0,
-    "max_trade_size_usd": 15.0,
-    "leverage_allowed": false
+    "position_size_min_percent": 5,
+    "position_size_max_percent": 10,
+    "stop_loss_percent": 3,
+    "take_profit_percent": 6,
+    "trailing_stop_percent": 2
   },
-  "watchlist": ["AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "META", "SPY"],
-  "market_hours": {
-    "run_at_hour_et": 9,
-    "run_at_minute_et": 20,
-    "market_open_hour_et": 9,
-    "market_open_minute_et": 30,
-    "close_hour_et": 16,
-    "close_minute_et": 0,
-    "check_market_hours": true,
-    "allow_premarket": true
+  "signals": {
+    "rsi_valid_min": 50,
+    "rsi_valid_max": 65,
+    "rsi_avoid_above": 70,
+    "rsi_avoid_below": 45,
+    "momentum_ideal_min": 0.02,
+    "momentum_ideal_max": 0.06,
+    "momentum_avoid_above": 0.08,
+    "momentum_avoid_below": 0.01,
+    "volume_ratio_threshold": 1.3,
+    "volatility_atr_min_percent": 1,
+    "volatility_atr_max_percent": 3,
+    "volatility_atr_avoid_above": 4,
+    "min_score_for_ai": 75,
+    "auto_approve_score": 85,
+    "weak_signal_score": 65
   },
-  "signal_thresholds": {
-    "rsi_bullish_min": 45,
-    "rsi_bullish_max": 70,
-    "rsi_bearish_max": 55,
-    "rsi_overbought": 75,
-    "rsi_oversold": 25,
-    "rsi_period": 14,
-    "volume_spike_multiplier": 1.5,
-    "volume_rolling_window": 20,
-    "trend_sma_short": 20,
-    "trend_sma_long": 50,
-    "volatility_atr_period": 14,
-    "volatility_high_threshold": 0.03,
-    "volatility_low_threshold": 0.01,
-    "min_signal_strength_for_claude": 60
+  "thresholds": {
+    "trend_required": true,
+    "volume_required": true,
+    "relative_strength_required": true,
+    "min_bars_for_indicators": 100
   },
-  "scoring_weights": {
-    "base": 50,
-    "trend_alignment": 30,
-    "rsi_alignment": 15,
-    "volume_confirmation": 15,
-    "high_volatility_penalty": -25,
-    "mixed_signals_penalty": -20
+  "market": {
+    "skip_weekends": true,
+    "skip_market_closed": true,
+    "market_open_hour": 9,
+    "market_open_minute": 30,
+    "market_close_hour": 16,
+    "market_close_minute": 0,
+    "timezone": "US/Eastern"
   },
-  "claude": {
-    "model": "claude-sonnet-4-6",
-    "max_tokens": 512,
-    "temperature": 0,
-    "min_strength_threshold": 70
+  "watchlist": {
+    "core_symbols": ["AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "META", "SPY", "QQQ", "XLF", "XLE", "XLV", "SMH", "IWM"],
+    "include_dynamic": true,
+    "dynamic_sources": ["gainers", "volume_leaders"],
+    "total_watchlist_target": 80,
+    "ai_review_cap": 15
   },
+  "ollama": {
+    "enabled": true,
+    "base_url": "http://localhost:11434",
+    "model": "gemma2:9b",
+    "timeout_seconds": 30,
+    "fallback_on_error": true
+  },
+  "data_source": "yfinance",
+  "timeframe": "1d",
   "feedback": {
     "min_trades_for_analysis": 10,
-    "rsi_adjustment_step": 2,
-    "win_rate_target": 0.55,
-    "auto_apply_adjustments": false
+    "min_trades_for_strong_feedback": 20,
+    "auto_apply_suggestions": false
   },
-  "execution": {
-    "slippage_pct": 0.001,
-    "commission_per_trade_usd": 0.0
+  "scheduler": {
+    "enabled": true,
+    "run_time": "08:20",
+    "run_on_trading_days_only": true
+  },
+  "github": {
+    "enabled": true,
+    "repo_path": null,
+    "auto_push": true,
+    "commit_message_template": "Trading cycle {date}: {symbol_count} signals, {trade_count} trades executed"
+  },
+  "dashboard": {
+    "update_on_run": true,
+    "docs_folder": "./docs"
+  },
+  "logging": {
+    "level": "INFO",
+    "log_file": "./logs/system.log",
+    "keep_trade_history": true
   }
 }

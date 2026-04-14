@@ -1,7 +1,29 @@
 {
-  "cash": 300.0,
-  "starting_balance": 300.0,
-  "open_positions": [],
-  "total_trades": 0,
-  "last_updated": "2026-04-13T00:00:00+00:00"
+  "starting_balance": 10000,
+  "cash": 9500.0,
+  "equity": 9500.0,
+  "open_positions": [
+    {
+      "trade_id": "9b6578b6",
+      "symbol": "MSFT",
+      "entry_date": "2026-04-14T18:07:15.297922",
+      "entry_price": 210.77,
+      "shares": 2.3722,
+      "allocated_capital": 500.0,
+      "stop_loss_price": 204.45,
+      "take_profit_price": 223.42,
+      "stop_loss_percent": 3,
+      "take_profit_percent": 6,
+      "confidence": 90,
+      "ai_reasoning": "test_auto_approve",
+      "status": "open",
+      "unrealized_pnl": 15.08,
+      "unrealized_pnl_percent": 3.02
+    }
+  ],
+  "closed_positions": [],
+  "total_pnl": 0,
+  "win_rate": 0,
+  "trades_count": 0,
+  "last_updated": "2026-04-14T18:07:15.300844"
 }

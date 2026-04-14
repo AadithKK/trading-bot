@@ -1,0 +1,58 @@
+2026-04-14 18:03:37,326 - __main__ - INFO - ============================================================
+2026-04-14 18:03:37,326 - __main__ - INFO - TRADING BOT STARTED
+2026-04-14 18:03:37,327 - __main__ - INFO - ============================================================
+2026-04-14 18:03:37,327 - modules.execution - INFO - New portfolio created with $10000.00
+2026-04-14 18:03:37,327 - __main__ - INFO - Starting trading cycle...
+2026-04-14 18:03:37,328 - __main__ - INFO - Scanning 13 symbols...
+2026-04-14 18:03:38,693 - yfinance - ERROR - Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:39,253 - yfinance - ERROR - AAPL: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:39,254 - modules.market_data - WARNING - AAPL: insufficient data (0 bars)
+2026-04-14 18:03:41,042 - yfinance - ERROR - Failed to get ticker 'MSFT' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:41,589 - yfinance - ERROR - MSFT: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:41,590 - modules.market_data - WARNING - MSFT: insufficient data (0 bars)
+2026-04-14 18:03:42,099 - yfinance - ERROR - Failed to get ticker 'NVDA' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:42,624 - yfinance - ERROR - NVDA: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:42,625 - modules.market_data - WARNING - NVDA: insufficient data (0 bars)
+2026-04-14 18:03:43,140 - yfinance - ERROR - Failed to get ticker 'TSLA' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:43,660 - yfinance - ERROR - TSLA: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:43,660 - modules.market_data - WARNING - TSLA: insufficient data (0 bars)
+2026-04-14 18:03:44,427 - yfinance - ERROR - Failed to get ticker 'AMZN' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:44,949 - yfinance - ERROR - AMZN: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:44,950 - modules.market_data - WARNING - AMZN: insufficient data (0 bars)
+2026-04-14 18:03:46,406 - yfinance - ERROR - Failed to get ticker 'META' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:47,225 - yfinance - ERROR - META: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:47,226 - modules.market_data - WARNING - META: insufficient data (0 bars)
+2026-04-14 18:03:47,772 - yfinance - ERROR - Failed to get ticker 'SPY' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:48,826 - yfinance - ERROR - SPY: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:48,827 - modules.market_data - WARNING - SPY: insufficient data (0 bars)
+2026-04-14 18:03:49,599 - yfinance - ERROR - Failed to get ticker 'QQQ' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:50,132 - yfinance - ERROR - QQQ: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:50,133 - modules.market_data - WARNING - QQQ: insufficient data (0 bars)
+2026-04-14 18:03:50,885 - yfinance - ERROR - Failed to get ticker 'XLF' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:51,407 - yfinance - ERROR - XLF: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:51,408 - modules.market_data - WARNING - XLF: insufficient data (0 bars)
+2026-04-14 18:03:51,953 - yfinance - ERROR - Failed to get ticker 'XLE' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:52,765 - yfinance - ERROR - XLE: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:52,766 - modules.market_data - WARNING - XLE: insufficient data (0 bars)
+2026-04-14 18:03:53,318 - yfinance - ERROR - Failed to get ticker 'XLV' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:54,128 - yfinance - ERROR - XLV: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:54,129 - modules.market_data - WARNING - XLV: insufficient data (0 bars)
+2026-04-14 18:03:54,654 - yfinance - ERROR - Failed to get ticker 'SMH' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:55,164 - yfinance - ERROR - SMH: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:55,164 - modules.market_data - WARNING - SMH: insufficient data (0 bars)
+2026-04-14 18:03:56,408 - yfinance - ERROR - Failed to get ticker 'IWM' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:56,921 - yfinance - ERROR - IWM: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:56,964 - modules.market_data - WARNING - IWM: insufficient data (0 bars)
+2026-04-14 18:03:56,965 - modules.market_data - INFO - Fetched 0/13 symbols successfully
+2026-04-14 18:03:56,965 - yfinance - ERROR - Failed to get ticker 'SPY' reason: Expecting value: line 1 column 1 (char 0)
+2026-04-14 18:03:57,749 - yfinance - ERROR - SPY: No price data found, symbol may be delisted (period=1y)
+2026-04-14 18:03:57,749 - modules.market_data - WARNING - SPY: insufficient data (0 bars)
+2026-04-14 18:03:57,750 - modules.signal_engine - INFO - Saved 0 signals to data/signals.json
+2026-04-14 18:03:57,770 - __main__ - INFO - Generated 0 valid signals
+2026-04-14 18:03:57,770 - __main__ - INFO - Closed 0 positions
+2026-04-14 18:03:57,780 - __main__ - INFO - Ollama AI: AVAILABLE
+2026-04-14 18:03:57,780 - __main__ - INFO - AI review candidates: 0, Auto-approve: 0
+2026-04-14 18:03:57,781 - __main__ - INFO - Total decisions: 0
+2026-04-14 18:03:57,787 - modules.github_sync - ERROR - Failed to update dashboard: 'trades_count'
+2026-04-14 18:03:57,851 - modules.github_sync - WARNING - Not a git repository - skipping sync
+2026-04-14 18:03:57,877 - __main__ - INFO - Cycle complete: Equity=$10000.00, Cash=$10000.00, Win rate: 0.0%

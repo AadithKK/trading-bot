@@ -1,140 +1,99 @@
-"""
-Logger Module
-Handles system logging (logs/system.log + stdout) and persistent trade
-history in data/trade_log.csv.
-"""
-
-import csv
 import logging
-import os
-from datetime import datetime, timezone
+import csv
+import json
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List
 
-TRADE_LOG_COLUMNS = [
-    "timestamp",
-    "symbol",
-    "action",
-    "entry_price",
-    "exit_price",
-    "quantity",
-    "position_size_usd",
-    "pnl_usd",
-    "pnl_pct",
-    "signal_strength",
-    "signal_direction",
-    "volatility",
-    "rsi_at_entry",
-    "trend_at_entry",
-    "volume_spike",
-    "claude_confidence",
-    "claude_reason",
-    "outcome",
-]
+class TradeLogger:
+    def __init__(self, trade_log_file: str = 'data/trade_log.csv', runs_file: str = 'data/runs.json'):
+        self.trade_log_file = trade_log_file
+        self.runs_file = runs_file
+        self._ensure_files()
 
+    def _ensure_files(self):
+        """Create files if they don't exist."""
+        Path('data').mkdir(exist_ok=True)
 
-def setup_logging(log_path: str) -> logging.Logger:
-    """
-    Configure root logger with FileHandler + StreamHandler.
-    Returns the root logger so callers can get named children via logging.getLogger(__name__).
-    """
-    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        # Create trade log CSV with headers if it doesn't exist
+        if not Path(self.trade_log_file).exists():
+            with open(self.trade_log_file, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    'timestamp', 'symbol', 'action', 'shares', 'entry_price',
+                    'exit_price', 'realized_pnl', 'realized_pnl_percent',
+                    'signal_score', 'confidence', 'close_reason', 'holding_days'
+                ])
 
-    log_format = "%(asctime)s  %(levelname)-8s  %(name)s — %(message)s"
-    date_format = "%Y-%m-%d %H:%M:%S"
+        # Create runs file if it doesn't exist
+        if not Path(self.runs_file).exists():
+            with open(self.runs_file, 'w') as f:
+                json.dump([], f)
 
-    root = logging.getLogger()
-    root.setLevel(logging.INFO)
+    def log_closed_trade(self, trade: Dict):
+        """Log a closed trade to CSV."""
+        try:
+            entry_date = datetime.fromisoformat(trade['entry_date'])
+            exit_date = datetime.fromisoformat(trade['exit_date'])
+            holding_days = (exit_date - entry_date).days
 
-    # Avoid adding duplicate handlers on repeated calls (e.g., tests)
-    if not root.handlers:
-        fh = logging.FileHandler(log_path, encoding="utf-8")
-        fh.setFormatter(logging.Formatter(log_format, date_format))
-        root.addHandler(fh)
+            with open(self.trade_log_file, 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    trade['exit_date'],
+                    trade['symbol'],
+                    'BUY',
+                    round(trade['shares'], 4),
+                    trade['entry_price'],
+                    trade['exit_price'],
+                    trade['realized_pnl'],
+                    trade['realized_pnl_percent'],
+                    trade.get('confidence', 0),
+                    trade.get('confidence', 0),
+                    trade.get('close_reason', 'unknown'),
+                    holding_days
+                ])
+        except Exception as e:
+            logging.error(f"Failed to log trade: {str(e)}")
 
-        sh = logging.StreamHandler()
-        sh.setFormatter(logging.Formatter(log_format, date_format))
-        root.addHandler(sh)
+    def log_run(self, run_data: Dict):
+        """Log a completed run."""
+        try:
+            with open(self.runs_file, 'r') as f:
+                runs = json.load(f)
 
-    return root
+            runs.append({
+                'timestamp': datetime.now().isoformat(),
+                'symbols_scanned': run_data.get('symbols_scanned', 0),
+                'signals_generated': run_data.get('signals_generated', 0),
+                'trades_opened': run_data.get('trades_opened', 0),
+                'trades_closed': run_data.get('trades_closed', 0),
+                'portfolio_equity': run_data.get('portfolio_equity', 0),
+                'ai_available': run_data.get('ai_available', False),
+                'status': run_data.get('status', 'completed')
+            })
 
+            with open(self.runs_file, 'w') as f:
+                json.dump(runs, f, indent=2)
 
-def log_trade(trade_record: dict, csv_path: str) -> None:
-    """
-    Append a single trade record to the CSV log.
-    Writes the header row only when the file is first created.
-    """
-    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-    file_exists = os.path.exists(csv_path) and os.path.getsize(csv_path) > 0
-
-    row = {col: trade_record.get(col, "") for col in TRADE_LOG_COLUMNS}
-
-    with open(csv_path, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=TRADE_LOG_COLUMNS)
-        if not file_exists:
-            writer.writeheader()
-        writer.writerow(row)
-
-
-def update_trade_on_close(symbol: str, exit_data: dict, csv_path: str) -> None:
-    """
-    Find the most recent open trade for `symbol` in the CSV and fill in:
-    exit_price, pnl_usd, pnl_pct, outcome.
-    Called when a SELL is executed.
-    """
-    if not os.path.exists(csv_path):
-        return
-
-    rows = []
-    updated = False
-
-    with open(csv_path, "r", newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            if (
-                not updated
-                and row["symbol"] == symbol
-                and row["action"] == "BUY"
-                and row["outcome"] == "open"
-            ):
-                row["exit_price"] = exit_data.get("exit_price", "")
-                row["pnl_usd"] = exit_data.get("pnl_usd", "")
-                row["pnl_pct"] = exit_data.get("pnl_pct", "")
-                row["outcome"] = exit_data.get("outcome", "")
-                updated = True
-            rows.append(row)
-
-    if updated:
-        with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=TRADE_LOG_COLUMNS)
-            writer.writeheader()
-            writer.writerows(rows)
+        except Exception as e:
+            logging.error(f"Failed to log run: {str(e)}")
 
 
-def read_trade_log(csv_path: str):
-    """Read the trade log CSV into a pandas DataFrame. Returns None if file missing."""
-    try:
-        import pandas as pd
-        if not os.path.exists(csv_path):
-            return None
-        df = pd.read_csv(csv_path)
-        if df.empty:
-            return None
-        return df
-    except Exception as exc:
-        logging.getLogger(__name__).warning(f"Could not read trade log: {exc}")
-        return None
+def setup_logging(config: dict):
+    """Configure logging."""
+    log_file = config['logging']['log_file']
+    log_level = config['logging']['level']
 
+    Path('logs').mkdir(exist_ok=True)
 
-def log_cycle_summary(cycle_data: dict, app_logger: logging.Logger) -> None:
-    """Log a human-readable summary at the end of each trading cycle."""
-    app_logger.info("=" * 60)
-    app_logger.info("CYCLE SUMMARY")
-    app_logger.info(f"  Symbols processed  : {cycle_data.get('symbols_processed', 0)}")
-    app_logger.info(f"  Signals generated  : {cycle_data.get('signals_generated', 0)}")
-    app_logger.info(f"  Signals to Claude  : {cycle_data.get('signals_to_claude', 0)}")
-    app_logger.info(f"  Trades executed    : {cycle_data.get('trades_executed', 0)}")
-    app_logger.info(f"  Open positions     : {cycle_data.get('open_positions', 0)}")
-    app_logger.info(f"  Cash               : ${cycle_data.get('cash', 0):.2f}")
-    app_logger.info(f"  Portfolio value    : ${cycle_data.get('portfolio_value', 0):.2f}")
-    pnl = cycle_data.get('portfolio_value', 300) - 300.0
-    app_logger.info(f"  Total P&L          : ${pnl:+.2f}")
-    app_logger.info("=" * 60)
+    logging.basicConfig(
+        level=getattr(logging, log_level),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler()
+        ]
+    )
+
+    return logging.getLogger(__name__)

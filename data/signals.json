@@ -1,0 +1,54 @@
+[
+  {
+    "symbol": "MSFT",
+    "score": 90,
+    "trend_state": "uptrend",
+    "rsi": 67.39,
+    "momentum_percent": 6.74,
+    "volume_ratio": 0.55,
+    "atr_percent": 2.1,
+    "relative_strength_percent": 94.88,
+    "notes": "uptrend, volume_low:0.55x, volatility_ok:2.1%, outperforming_spy:94.9%",
+    "reject_reason": null,
+    "timestamp": "2026-04-14T18:07:15.271622"
+  },
+  {
+    "symbol": "NVDA",
+    "score": 75,
+    "trend_state": "mixed",
+    "rsi": 48.31,
+    "momentum_percent": -3.62,
+    "volume_ratio": 1.62,
+    "atr_percent": 2.01,
+    "relative_strength_percent": 23.5,
+    "notes": "mixed_trend, momentum_weak:-3.6%, volume_spike:1.62x, volatility_ok:2.0%, outperforming_spy:23.5%",
+    "reject_reason": null,
+    "timestamp": "2026-04-14T18:07:15.274309"
+  },
+  {
+    "symbol": "AAPL",
+    "score": 25,
+    "trend_state": "mixed",
+    "rsi": 37.5,
+    "momentum_percent": -0.8,
+    "volume_ratio": 0.63,
+    "atr_percent": 2.35,
+    "relative_strength_percent": -12.11,
+    "notes": "mixed_trend",
+    "reject_reason": "rsi_oversold:37",
+    "timestamp": "2026-04-14T18:07:15.268790"
+  },
+  {
+    "symbol": "TSLA",
+    "score": 0,
+    "trend_state": "downtrend",
+    "rsi": 26.99,
+    "momentum_percent": -8.46,
+    "volume_ratio": 0.72,
+    "atr_percent": 2.22,
+    "relative_strength_percent": 51.96,
+    "notes": "",
+    "reject_reason": "downtrend",
+    "timestamp": "2026-04-14T18:07:15.276987"
+  }
+]

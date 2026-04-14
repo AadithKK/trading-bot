@@ -1,187 +1,252 @@
-# Claude Paper Trading Bot
+# Local Paper Trading Bot MVP
 
-A fully automated paper trading system that uses deterministic signal scoring + Claude AI to manage a $300 simulated portfolio. Runs every weekday morning without any manual input.
+A fully local, desktop-based paper trading system using Ollama for AI decision support.
 
-**Live Dashboard → https://aadithkk.github.io/trading-bot/**
+## Quick Start
 
----
+### 1. Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Start Ollama Server
+
+In PowerShell:
+```powershell
+ollama run gemma2:9b
+```
+
+(Or your preferred model - config.json has "gemma2:9b" as default)
+
+### 3. Run a Manual Test
+
+```bash
+python main.py --status
+```
+
+This shows your current portfolio.
+
+```bash
+python main.py --force
+```
+
+This runs a full trading cycle (ignores market hours for testing).
+
+## Configuration
+
+All settings are in `config.json`:
+
+- **trading**: Position sizing, stop loss, take profit, max positions
+- **signals**: RSI ranges, momentum thresholds, volume requirements
+- **thresholds**: Indicator calculations, minimum bars for analysis
+- **market**: Trading hours, timezone, day checks
+- **watchlist**: Core symbols, dynamic sources, AI review cap
+- **ollama**: Ollama server URL, model, timeout settings
+- **feedback**: When to trigger performance analysis
+- **scheduler**: Run time, enabled/disabled
+- **github**: Auto-push settings, repo path
+- **logging**: Log level, file locations
+
+## Project Structure
+
+```
+trading-bot-local/
+├── main.py                 # Entry point
+├── config.json             # All settings
+├── requirements.txt        # Python dependencies
+├── run_bot.bat             # Windows Task Scheduler script
+├── README.md               # This file
+│
+├── modules/
+│   ├── market_data.py      # yfinance fetcher + watchlist
+│   ├── signal_engine.py    # Deterministic indicator scoring
+│   ├── ai_decision.py      # Ollama integration
+│   ├── execution.py        # Paper trading engine
+│   ├── logger.py           # Trade logging + runs tracking
+│   └── __init__.py         # Empty, for imports
+│
+├── data/                   # Persistent data (created at runtime)
+│   ├── portfolio.json      # Current portfolio state
+│   ├── trade_log.csv       # All closed trades
+│   ├── signals.json        # Latest signal scores
+│   ├── watchlist.json      # Current watchlist
+│   ├── runs.json           # Run history
+│   └── performance.json    # Performance metrics (future)
+│
+├── logs/                   # Log files
+│   ├── system.log          # Main system log
+│   └── scheduler.log       # Task scheduler log
+│
+└── docs/                   # Dashboard (for GitHub Pages)
+    └── (generated at runtime)
+```
 
 ## How It Works
 
-Every weekday at **9:20 AM ET**, a scheduled Claude agent wakes up in Anthropic's cloud and runs the full trading cycle automatically. Your PC does not need to be on.
+### Trading Cycle
 
-```
-9:20 AM ET — Claude agent fires (Anthropic cloud)
-    │
-    ├─ 1. Fetches live market data (yfinance) for 7 symbols
-    │
-    ├─ 2. Signal Engine scores each symbol (0–100, no AI)
-    │      AAPL, MSFT, NVDA, TSLA, AMZN, META, SPY
-    │
-    ├─ 3. Only signals with score ≥ 60 go to Claude for review
-    │
-    ├─ 4. Claude selects 0–3 trades (or HOLDs) using risk rules
-    │
-    ├─ 5. Trades are paper-executed (simulated, no real money)
-    │
-    ├─ 6. Results saved to data/portfolio.json + data/trade_log.csv
-    │
-    └─ 7. GitHub commit pushed → dashboard updates automatically
-```
+1. **Market Data Fetch** - Grab OHLCV data for watchlist symbols
+2. **Signal Engine** - Score each symbol 0-100 (deterministic, no AI)
+3. **Trade Filter** - Keep only strongest signals (score ≥ 75 for AI review)
+4. **AI Review** - Ollama reviews top 10-15 candidates, decides BUY/SKIP
+5. **Paper Execution** - Simulate trades, track stop loss / take profit
+6. **Position Updates** - Check if any open trades hit exits
+7. **Logging** - Record all trades, run stats
+8. **Portfolio Save** - Update portfolio.json with new state
 
----
+### Signal Scoring
 
-## The Two Layers
+Each symbol gets scored based on:
 
-### Layer 1 — Signal Engine (deterministic, no AI)
-Scores every symbol based on technical indicators. Pure math, no guessing.
+- **Trend** (+30): Price > SMA20 > SMA50 (uptrend required)
+- **RSI** (+15): In valid range (50-65 for longs)
+- **Momentum** (+15): Recent 5-day move 2-6%
+- **Volume** (+15): Current volume ≥ 1.3x average
+- **Volatility** (-25): ATR too high (> 4% of price)
+- **Relative Strength** (+10): Outperforming SPY
 
-| Indicator | How it's used |
-|---|---|
-| RSI (14-day) | Bullish zone: 45–70. Bearish zone: below 55. Extremes (>75 or <25) = neutral. |
-| Trend | SMA20 vs SMA50. Price > SMA20 > SMA50 = uptrend. Opposite = downtrend. |
-| Volume | Current volume vs 20-day rolling average. >1.5× average = spike. |
-| Volatility | ATR(14) / price. Above 3% = high. Below 1% = low. |
+**Score ranges:**
+- 0-64: Rejected
+- 65-74: Weak, AI may skip
+- 75-84: Strong, AI will review
+- 85+: Very strong, auto-approved
 
-**Scoring formula:**
-```
-Base score:            50
-+ Trend alignment:    +30   (signal direction matches trend)
-+ RSI in range:       +15
-+ Volume spike:       +15
-- High volatility:    -25
-- Mixed signals:      -20   (contradictory indicators)
-─────────────────────────
-Max possible:         100
-Min possible:           0
-```
+### AI Decision Layer
 
-Only symbols scoring **≥ 60** are passed to Claude. Everything below is filtered out automatically.
+Ollama (local, Gemma model) acts as a **risk reviewer**:
+- Reviews only the strongest signals
+- Decides BUY or SKIP
+- Suggests position size (5-10% of account)
+- Suggests stop loss and take profit levels
+- Falls back to rules if unavailable
 
-### Layer 2 — Claude Filter (AI review)
-Claude receives only the pre-scored signals. It does not see raw market data. Its job is risk control, not prediction.
+## Running the Bot
 
-Claude's rules:
-- Reject any signal with strength below 70
-- Maximum 3 open positions at any time
-- Each trade: $6–$15 (2–5% of $300)
-- When uncertain → HOLD (capital preservation over profit)
-- No leverage, ever
-
----
-
-## File Structure
-
-```
-trading-bot/
-│
-├── main.py                    # Entry point — two modes:
-│                              #   --generate-signals  (Step 1-2 above)
-│                              #   --execute-decisions (Step 5-6 above)
-│
-├── config.json                # All tunable settings (thresholds, weights, etc.)
-├── requirements.txt           # Python deps (yfinance, pandas, pytz)
-│
-├── modules/
-│   ├── market_data.py         # Fetches OHLCV from yfinance, computes all indicators
-│   ├── signal_engine.py       # Deterministic scoring engine
-│   ├── execution_engine.py    # Paper trade simulation (no real broker needed)
-│   ├── logger.py              # CSV trade log + system.log
-│   └── feedback_analyzer.py  # Win rate analysis, suggests threshold adjustments
-│
-├── data/
-│   ├── portfolio.json         # Live state: cash, open positions, total trades
-│   ├── trade_log.csv          # Every trade ever made (entry, exit, P&L, outcome)
-│   └── feedback_report.json  # Latest win rate analysis (appears after 10+ trades)
-│
-├── docs/                      # GitHub Pages dashboard
-│   ├── index.html             # Charts, P&L, open positions, recent trades
-│   └── data/                  # Mirror of data/ — updated by agent each cycle
-│
-└── logs/
-    └── system.log             # Full log of every cycle (what happened and why)
-```
-
----
-
-## Watchlist
-
-| Symbol | What it is |
-|---|---|
-| AAPL | Apple |
-| MSFT | Microsoft |
-| NVDA | Nvidia |
-| TSLA | Tesla |
-| AMZN | Amazon |
-| META | Meta |
-| SPY | S&P 500 ETF (market benchmark) |
-
----
-
-## Account Rules
-
-| Setting | Value |
-|---|---|
-| Starting balance | $300 |
-| Risk per trade | $6–$15 (2–5%) |
-| Max open positions | 3 |
-| Leverage | Not allowed |
-| Trading type | Paper (simulated) |
-
----
-
-## Feedback Loop
-
-After **10 closed trades**, the system automatically analyzes performance and suggests threshold adjustments:
-
-- If RSI range 60–70 has a low win rate → suggests narrowing the range
-- If high-volatility trades consistently lose → suggests increasing the penalty
-- If a trend condition underperforms → flags it for review
-
-Suggestions are saved to `data/feedback_report.json` and shown on the dashboard. Adjustments are **not applied automatically** unless you set `auto_apply_adjustments: true` in `config.json`.
-
----
-
-## Running Manually
-
-If you want to run a cycle yourself (for testing):
+### Manual Run
 
 ```bash
-# Install deps (first time only)
-pip install -r requirements.txt
+# Check portfolio status
+python main.py --status
 
-# Step 1: Generate and score signals
-python main.py --generate-signals --force
+# Run cycle (ignoring market hours)
+python main.py --force
 
-# Step 2: Review data/pending_signals.json, then run execution
-python main.py --execute-decisions --force
+# Run with default config
+python main.py
 ```
 
-The `--force` flag bypasses the weekday/market-hours check.
+### Scheduled Runs (Windows Task Scheduler)
 
----
+1. Open Task Scheduler (taskscheduler.msc)
+2. Create Basic Task
+3. Name: "Trading Bot Daily"
+4. Trigger: Daily, 8:20 AM (before market open)
+5. Action: Start program: `C:\path\to\run_bot.bat`
+6. Conditions: Only run if user is logged on (optional)
 
-## Tuning the Bot
+**Note:** The bot will skip non-trading days automatically.
 
-All thresholds are in `config.json`. Key ones to know:
+## Portfolio Files
 
+### portfolio.json
+Live portfolio state:
+- Starting balance
+- Current cash
+- Equity
+- Open positions
+- Closed positions history
+- Win rate, P&L tracking
+
+### trade_log.csv
+Every closed trade:
+- Entry/exit dates
+- Prices
+- P&L
+- Close reason
+- Holding period
+
+### signals.json
+Latest signal scores from last run
+
+### runs.json
+History of all cycle runs with stats
+
+## Customization
+
+### Change Stop Loss / Take Profit
+Edit `config.json`:
 ```json
-"signal_thresholds": {
-  "rsi_bullish_min": 45,       ← raise to be more selective on RSI
-  "rsi_bullish_max": 70,       ← lower to avoid near-overbought signals
-  "min_signal_strength_for_claude": 60  ← raise to only send strongest signals
-},
-"scoring_weights": {
-  "high_volatility_penalty": -25  ← increase (more negative) to avoid volatile markets
-},
-"claude": {
-  "min_strength_threshold": 70   ← Claude rejects anything below this
+"trading": {
+  "stop_loss_percent": 3,
+  "take_profit_percent": 6
 }
 ```
 
----
+### Add/Remove Symbols
+Edit `config.json` -> `watchlist` -> `core_symbols`
 
-## Scheduled Agent
+### Adjust Signal Thresholds
+Edit `config.json` -> `signals`
 
-The daily cycle is handled by a Claude Code scheduled trigger (no local machine needed).
-To view or manage the schedule: **https://claude.ai/code/scheduled**
+Example: Make RSI range stricter:
+```json
+"rsi_valid_min": 55,
+"rsi_valid_max": 60
+```
+
+### Change Ollama Model
+```json
+"ollama": {
+  "model": "mistral:latest"
+}
+```
+
+Make sure the model is installed: `ollama run mistral:latest`
+
+## Troubleshooting
+
+### Ollama Not Connecting
+- Check Ollama is running: `ollama list` in terminal
+- Verify base URL in config.json (default: `http://localhost:11434`)
+- Check logs/system.log for connection errors
+
+### No Data Fetched
+- Check internet connection
+- Verify symbols are valid (AAPL, MSFT, etc.)
+- Check logs for yfinance errors
+
+### Trades Not Executing
+- Check cash balance (need ≥ 5% of equity available)
+- Check max open positions (default: 3)
+- Look for reject reasons in logs
+
+### Portfolio Not Saving
+- Check write permissions on `data/` folder
+- Ensure disk space available
+- Check logs for file write errors
+
+## Future Upgrades
+
+This MVP is designed for easy expansion:
+
+1. **Real Broker Integration** - Replace paper execution with live broker API
+2. **Feedback Loop** - Auto-suggest threshold adjustments after 20+ trades
+3. **Dashboard** - GitHub Pages site showing live performance
+4. **Advanced Indicators** - More sophisticated signal generation
+5. **Risk Management** - Portfolio-level risk controls, correlation analysis
+6. **Multiple Timeframes** - Intraday trading support
+
+The core structure remains unchanged - just swap out modules as needed.
+
+## Support
+
+Check `logs/system.log` for detailed error messages.
+
+Run `python main.py --status` to verify bot health.
+
+Inspect `data/` folder files to debug data issues.
+
+## License
+
+MIT - Use and modify as needed.

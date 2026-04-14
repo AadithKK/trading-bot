@@ -1,305 +1,211 @@
+#!/usr/bin/env python3
 """
-Main Trading Cycle Scripts
-
-Designed to work with a scheduled Claude Code agent (no API key needed).
-The agent runs these two commands each morning:
-
-  1. python main.py --generate-signals
-     Fetches market data, scores all symbols, saves qualified signals to
-     data/pending_signals.json for Claude to review.
-
-  2. python main.py --execute-decisions
-     Reads Claude's decisions from data/pending_decisions.json and
-     executes the trades, logs them, runs feedback analysis.
-
-Manual testing (bypasses market hours check):
-  python main.py --generate-signals --force
-  python main.py --execute-decisions --force
+Local Paper Trading Bot - Main Entry Point
+Runs trading cycle: fetch data -> score signals -> AI review -> execute -> log results
 """
 
-import argparse
 import json
 import logging
-import os
+import argparse
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
+from pathlib import Path
 
-import pytz
+from modules.logger import setup_logging, TradeLogger
+from modules.market_data import MarketDataFetcher, WatchlistManager
+from modules.signal_engine import SignalEngine
+from modules.ai_decision import OllamaAIDecider
+from modules.execution import PaperExecutionEngine, Portfolio
+from modules.github_sync import GitHubSync
 
-# ---------------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------------
+logger = logging.getLogger(__name__)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH        = os.path.join(BASE_DIR, "config.json")
-PORTFOLIO_PATH     = os.path.join(BASE_DIR, "data", "portfolio.json")
-TRADE_LOG_PATH     = os.path.join(BASE_DIR, "data", "trade_log.csv")
-FEEDBACK_PATH      = os.path.join(BASE_DIR, "data", "feedback_report.json")
-PENDING_SIGNALS    = os.path.join(BASE_DIR, "data", "pending_signals.json")
-PENDING_DECISIONS  = os.path.join(BASE_DIR, "data", "pending_decisions.json")
-LOG_PATH           = os.path.join(BASE_DIR, "logs", "system.log")
+class TradingBot:
+    def __init__(self, config_file: str = 'config.json'):
+        self.config = self.load_config(config_file)
+        logger.info("=" * 60)
+        logger.info("TRADING BOT STARTED")
+        logger.info("=" * 60)
 
-PATHS = {
-    "trade_log": TRADE_LOG_PATH,
-    "feedback":  FEEDBACK_PATH,
-    "config":    CONFIG_PATH,
-}
+        self.portfolio = Portfolio(self.config)
+        self.market_fetcher = MarketDataFetcher(self.config)
+        self.watchlist_manager = WatchlistManager(self.config)
+        self.signal_engine = SignalEngine(self.config)
+        self.ai_decider = OllamaAIDecider(self.config)
+        self.execution_engine = PaperExecutionEngine(self.config, self.portfolio)
+        self.trade_logger = TradeLogger()
+        self.github_sync = GitHubSync(self.config)
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+    def load_config(self, config_file: str) -> dict:
+        """Load configuration from JSON."""
+        try:
+            with open(config_file, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load config: {str(e)}")
+            sys.exit(1)
 
+    def run_cycle(self, force: bool = False) -> bool:
+        """Run a complete trading cycle."""
+        logger.info("Starting trading cycle...")
 
-def load_config() -> dict:
-    with open(CONFIG_PATH, "r") as f:
-        return json.load(f)
+        # Check market hours (skip if not trading day)
+        if not force and not self._is_trading_day():
+            logger.info("Not a trading day, skipping cycle")
+            return False
 
+        run_stats = {
+            'symbols_scanned': 0,
+            'signals_generated': 0,
+            'trades_opened': 0,
+            'trades_closed': 0,
+            'portfolio_equity': self.portfolio.equity,
+            'ai_available': False
+        }
 
-def is_trading_day() -> bool:
-    """True if today is Mon–Fri in ET."""
-    now = datetime.now(pytz.timezone("America/New_York"))
-    return now.weekday() < 5
+        try:
+            # Step 1: Load watchlist
+            watchlist = self.watchlist_manager.load_watchlist()
+            if not watchlist:
+                watchlist = self.config['watchlist']['core_symbols']
+                self.watchlist_manager.save_watchlist(watchlist)
 
+            logger.info(f"Scanning {len(watchlist)} symbols...")
+            run_stats['symbols_scanned'] = len(watchlist)
 
-def is_after_close(config: dict) -> bool:
-    now = datetime.now(pytz.timezone("America/New_York"))
-    return now.hour >= config["market_hours"]["close_hour_et"]
+            # Step 2: Fetch market data
+            market_data = self.market_fetcher.fetch_multiple(watchlist)
+            spy_data = self.market_fetcher.get_spy_data()
 
+            # Step 3: Score all symbols
+            scores = self.signal_engine.score_all(market_data, spy_data)
+            strong_signals = [s for s in scores if s.get('reject_reason') is None]
+            logger.info(f"Generated {len(strong_signals)} valid signals")
+            run_stats['signals_generated'] = len(strong_signals)
 
-# ---------------------------------------------------------------------------
-# Mode 1 — Generate Signals
-# Collects market data, scores all symbols, writes pending_signals.json
-# ---------------------------------------------------------------------------
+            # Step 4: Update existing positions
+            current_prices = {
+                symbol: self.market_fetcher.get_current_price(df)
+                for symbol, df in market_data.items()
+            }
+            closed_trades = self.execution_engine.update_positions(current_prices)
+            for trade in closed_trades:
+                self.trade_logger.log_closed_trade(trade)
+            logger.info(f"Closed {len(closed_trades)} positions")
+            run_stats['trades_closed'] = len(closed_trades)
 
+            # Step 5: Check AI availability
+            ai_available = self.ai_decider.is_available()
+            run_stats['ai_available'] = ai_available
+            logger.info(f"Ollama AI: {'AVAILABLE' if ai_available else 'UNAVAILABLE'}")
 
-def generate_signals_mode(force: bool = False) -> None:
-    config = load_config()
+            # Step 6: Get candidates for AI review
+            candidates = self.signal_engine.filter_for_ai(strong_signals)
+            auto_approve = self.signal_engine.get_auto_approve_trades(strong_signals)
 
-    from modules.logger import setup_logging
-    setup_logging(LOG_PATH)
-    log = logging.getLogger("generate_signals")
-    log.info("=" * 60)
-    log.info("generate-signals: starting")
+            logger.info(f"AI review candidates: {len(candidates)}, Auto-approve: {len(auto_approve)}")
 
-    if not force and config["market_hours"].get("check_market_hours", True):
-        if not is_trading_day():
-            log.info("Weekend — skipping signal generation")
-            return
-        if is_after_close(config):
-            log.info("Market closed for the day — skipping")
-            return
+            # Step 7: Get AI decisions
+            decisions = []
 
-    from modules.execution_engine import load_portfolio
-    portfolio = load_portfolio(PORTFOLIO_PATH)
+            # Auto-approve high-confidence trades
+            for signal in auto_approve:
+                decisions.append({
+                    'symbol': signal['symbol'],
+                    'action': 'BUY',
+                    'confidence': min(100, signal['score']),
+                    'position_size_percent': self.config['trading']['position_size_min_percent'],
+                    'stop_loss_percent': self.config['trading']['stop_loss_percent'],
+                    'take_profit_percent': self.config['trading']['take_profit_percent'],
+                    'reasoning': 'auto_approved'
+                })
 
-    from modules.market_data import collect_all_symbols
-    log.info("Fetching market data...")
-    snapshots = collect_all_symbols(config)
-
-    if not snapshots:
-        log.warning("No market data — cannot generate signals")
-        _write_empty_signals(portfolio)
-        return
-
-    from modules.signal_engine import generate_signals, filter_by_min_strength
-    all_signals = generate_signals(snapshots, config)
-    min_strength = config["signal_thresholds"]["min_signal_strength_for_claude"]
-    qualified = filter_by_min_strength(all_signals, min_strength)
-
-    # Build the pending_signals file for Claude to read
-    output = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "portfolio_summary": {
-            "cash": portfolio["cash"],
-            "open_count": len(portfolio["open_positions"]),
-            "open_positions": [
-                {
-                    "symbol": p["symbol"],
-                    "entry_price": p["entry_price"],
-                    "quantity": p["quantity"],
-                    "position_size_usd": p["position_size_usd"],
+            # Get AI decisions for borderline signals
+            if candidates and ai_available:
+                portfolio_state = {
+                    'cash': self.portfolio.get_cash(),
+                    'open_positions': len(self.portfolio.open_positions),
+                    'max_positions': self.config['trading']['max_open_positions'],
+                    'equity': self.portfolio.equity
                 }
-                for p in portfolio["open_positions"]
-            ],
-        },
-        "min_strength_threshold": min_strength,
-        "all_signals": all_signals,
-        "qualified_signals": qualified,
-        "snapshots": {s["symbol"]: s for s in snapshots},
-    }
+                ai_decisions = self.ai_decider.get_ai_decisions(candidates, portfolio_state)
+                if ai_decisions:
+                    decisions.extend(ai_decisions)
 
-    os.makedirs(os.path.dirname(PENDING_SIGNALS), exist_ok=True)
-    with open(PENDING_SIGNALS, "w") as f:
-        json.dump(output, f, indent=2)
+            logger.info(f"Total decisions: {len(decisions)}")
 
-    log.info(
-        f"Signals saved → {len(qualified)}/{len(all_signals)} qualified "
-        f"(strength >= {min_strength})"
-    )
-    log.info(f"Pending signals file: {PENDING_SIGNALS}")
+            # Step 8: Execute trades
+            for decision in decisions:
+                symbol = decision['symbol']
+                if symbol in market_data:
+                    current_price = current_prices[symbol]
+                    trade = self.execution_engine.execute_trade(decision, current_price)
+                    if trade:
+                        run_stats['trades_opened'] += 1
 
-    if qualified:
-        log.info("Qualified signals for Claude review:")
-        for s in qualified:
-            snap = output["snapshots"].get(s["symbol"], {})
-            log.info(
-                f"  {s['symbol']:5s}  {s['signal']:<8s}  strength={s['strength']}  "
-                f"rsi={snap.get('rsi','?')}  trend={snap.get('trend','?')}  "
-                f"vol={snap.get('volatility','?')}"
-            )
-    else:
-        log.info("No signals qualified — Claude will see an empty list")
+            # Step 9: Save portfolio and log run
+            self.portfolio.save_portfolio()
+            run_stats['portfolio_equity'] = self.portfolio.equity
+            self.trade_logger.log_run(run_stats)
 
+            # Step 10: Update dashboard and sync to GitHub
+            self.github_sync.update_dashboard(self.portfolio.to_dict())
+            self.github_sync.commit_and_push(run_stats)
 
-def _write_empty_signals(portfolio: dict) -> None:
-    output = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "portfolio_summary": {
-            "cash": portfolio["cash"],
-            "open_count": len(portfolio["open_positions"]),
-            "open_positions": [],
-        },
-        "qualified_signals": [],
-        "all_signals": [],
-        "snapshots": {},
-    }
-    os.makedirs(os.path.dirname(PENDING_SIGNALS), exist_ok=True)
-    with open(PENDING_SIGNALS, "w") as f:
-        json.dump(output, f, indent=2)
+            logger.info(f"Cycle complete: Equity=${self.portfolio.equity:.2f}, "
+                       f"Cash=${self.portfolio.get_cash():.2f}, "
+                       f"Win rate: {self.portfolio.win_rate:.1f}%")
 
+            return True
 
-# ---------------------------------------------------------------------------
-# Mode 2 — Execute Decisions
-# Reads pending_decisions.json written by Claude, executes the trades
-# ---------------------------------------------------------------------------
+        except Exception as e:
+            logger.error(f"Cycle failed: {str(e)}", exc_info=True)
+            run_stats['status'] = 'failed'
+            self.trade_logger.log_run(run_stats)
+            return False
 
+    def _is_trading_day(self) -> bool:
+        """Check if today is a trading day."""
+        import datetime as dt
+        today = dt.datetime.now()
 
-def execute_decisions_mode(force: bool = False) -> None:
-    config = load_config()
+        # Skip weekends
+        if today.weekday() >= 5:  # Saturday = 5, Sunday = 6
+            return False
 
-    from modules.logger import setup_logging, log_trade, update_trade_on_close, log_cycle_summary
-    setup_logging(LOG_PATH)
-    log = logging.getLogger("execute_decisions")
-    log.info("=" * 60)
-    log.info("execute-decisions: starting")
+        # TODO: Add holiday checks
 
-    if not force and config["market_hours"].get("check_market_hours", True):
-        if not is_trading_day():
-            log.info("Weekend — skipping execution")
-            return
-        if is_after_close(config):
-            log.info("Market closed — skipping execution")
-            return
+        return True
 
-    # Load Claude's decisions
-    if not os.path.exists(PENDING_DECISIONS):
-        log.warning(f"No pending decisions file found at {PENDING_DECISIONS} — nothing to execute")
-        return
+    def print_status(self):
+        """Print current portfolio status."""
+        logger.info("\n" + "=" * 60)
+        logger.info("PORTFOLIO STATUS")
+        logger.info("=" * 60)
+        stats = self.portfolio.to_dict()
+        for key, value in stats.items():
+            logger.info(f"{key:.<40} {value}")
+        logger.info("=" * 60 + "\n")
 
-    with open(PENDING_DECISIONS, "r") as f:
-        decisions_data = json.load(f)
-
-    trades = decisions_data.get("trades", [])
-    if not trades:
-        log.info("Claude provided no trades — HOLD this cycle")
-        _print_portfolio_summary(config, log)
-        return
-
-    log.info(f"Received {len(trades)} decision(s) from Claude")
-
-    # Load the snapshots that were generated alongside the signals
-    snapshots = []
-    if os.path.exists(PENDING_SIGNALS):
-        with open(PENDING_SIGNALS, "r") as f:
-            sigs_data = json.load(f)
-        snap_map = sigs_data.get("snapshots", {})
-        snapshots = list(snap_map.values())
-
-    if not snapshots:
-        log.warning("No snapshot data — cannot determine current prices. Aborting.")
-        return
-
-    from modules.execution_engine import load_portfolio, process_trades, get_portfolio_value
-    portfolio = load_portfolio(PORTFOLIO_PATH)
-
-    executed = process_trades(trades, snapshots, portfolio, config, PORTFOLIO_PATH)
-
-    for trade in executed:
-        log_trade(trade, TRADE_LOG_PATH)
-        if trade["action"] == "SELL":
-            update_trade_on_close(trade["symbol"], trade, TRADE_LOG_PATH)
-
-    log.info(f"Executed {len(executed)} trade(s)")
-
-    # Clear the decisions file after execution to avoid re-running stale decisions
-    os.remove(PENDING_DECISIONS)
-
-    # Reload portfolio after trades
-    portfolio = load_portfolio(PORTFOLIO_PATH)
-    portfolio_value = get_portfolio_value(portfolio, snapshots)
-
-    # Feedback analysis
-    from modules.feedback_analyzer import run_feedback_analysis
-    try:
-        run_feedback_analysis(config, PATHS)
-    except Exception as exc:
-        log.warning(f"Feedback analysis error (non-fatal): {exc}")
-
-    # Cycle summary
-    log_cycle_summary(
-        {
-            "symbols_processed": len(snapshots),
-            "signals_generated": len(sigs_data.get("all_signals", [])) if os.path.exists(PENDING_SIGNALS) else 0,
-            "signals_to_claude": len(sigs_data.get("qualified_signals", [])) if os.path.exists(PENDING_SIGNALS) else 0,
-            "trades_executed": len(executed),
-            "open_positions": len(portfolio["open_positions"]),
-            "cash": portfolio["cash"],
-            "portfolio_value": portfolio_value,
-        },
-        log,
-    )
-
-
-def _print_portfolio_summary(config: dict, log: logging.Logger) -> None:
-    from modules.execution_engine import load_portfolio, get_portfolio_value
-    portfolio = load_portfolio(PORTFOLIO_PATH)
-    snapshots = []
-    if os.path.exists(PENDING_SIGNALS):
-        with open(PENDING_SIGNALS, "r") as f:
-            data = json.load(f)
-        snapshots = list(data.get("snapshots", {}).values())
-    value = get_portfolio_value(portfolio, snapshots)
-    log.info(f"Portfolio: cash=${portfolio['cash']:.2f}  value=${value:.2f}  "
-             f"positions={len(portfolio['open_positions'])}")
-
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Claude Paper Trading System")
-    parser.add_argument(
-        "--generate-signals",
-        action="store_true",
-        help="Collect market data, score signals, write data/pending_signals.json",
-    )
-    parser.add_argument(
-        "--execute-decisions",
-        action="store_true",
-        help="Read data/pending_decisions.json from Claude and execute trades",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Bypass market hours / weekday check (for testing)",
-    )
+def main():
+    parser = argparse.ArgumentParser(description='Local Paper Trading Bot')
+    parser.add_argument('--config', default='config.json', help='Config file path')
+    parser.add_argument('--force', action='store_true', help='Force run even outside market hours')
+    parser.add_argument('--status', action='store_true', help='Print portfolio status and exit')
     args = parser.parse_args()
 
-    if args.generate_signals:
-        generate_signals_mode(force=args.force)
-    elif args.execute_decisions:
-        execute_decisions_mode(force=args.force)
-    else:
-        parser.print_help()
-        print("\nRun with --generate-signals or --execute-decisions")
+    # Setup logging
+    config = json.load(open(args.config)) if Path(args.config).exists() else {}
+    setup_logging(config)
+
+    bot = TradingBot(args.config)
+
+    if args.status:
+        bot.print_status()
+        return 0
+
+    success = bot.run_cycle(force=args.force)
+    return 0 if success else 1
+
+if __name__ == '__main__':
+    sys.exit(main())

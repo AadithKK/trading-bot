@@ -1,179 +1,121 @@
-"""
-Market Data Module
-Fetches OHLCV data from yfinance and computes all technical indicators
-using pure pandas — no TA-Lib or C dependencies required.
-"""
-
-import logging
-import math
-from datetime import datetime, timezone
-
-import numpy as np
-import pandas as pd
 import yfinance as yf
+import pandas as pd
+import logging
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple
+import json
+import time
 
 logger = logging.getLogger(__name__)
 
+class MarketDataFetcher:
+    def __init__(self, config: dict):
+        self.config = config
+        self.min_bars = config['thresholds']['min_bars_for_indicators']
+        self.lookback_days = max(self.min_bars, 200)
+        self.max_retries = 3
+        self.retry_delay = 2
 
-def fetch_raw_data(symbol: str, period: str = "60d") -> pd.DataFrame | None:
-    """Download daily OHLCV from yfinance. Returns None on failure."""
-    try:
-        ticker = yf.Ticker(symbol)
-        df = ticker.history(period=period, interval="1d", auto_adjust=True)
-        if df is None or df.empty or len(df) < 55:
-            logger.warning(f"{symbol}: insufficient data ({len(df) if df is not None else 0} bars)")
-            return None
-        df.index = pd.to_datetime(df.index)
-        return df
-    except Exception as exc:
-        logger.warning(f"{symbol}: fetch failed — {exc}")
-        return None
+    def fetch_symbol(self, symbol: str) -> Optional[pd.DataFrame]:
+        """Fetch OHLCV data for a symbol with retry logic."""
+        for attempt in range(self.max_retries):
+            try:
+                ticker = yf.Ticker(symbol)
+                df = ticker.history(period='1y')
 
+                if df.empty or len(df) < self.min_bars:
+                    logger.warning(f"{symbol}: insufficient data ({len(df)} bars)")
+                    return None
 
-def calculate_rsi(close: pd.Series, period: int = 14) -> float:
-    """
-    Wilder's RSI using EMA smoothing.
-    Returns the most recent RSI value as a float rounded to 2 dp.
-    """
-    delta = close.diff()
-    gain = delta.clip(lower=0)
-    loss = -delta.clip(upper=0)
+                if df['Close'].isnull().all():
+                    logger.warning(f"{symbol}: all close prices are null")
+                    return None
 
-    avg_gain = gain.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
-    avg_loss = loss.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+                df = df.dropna(subset=['Close', 'Volume'])
+                if len(df) < self.min_bars:
+                    logger.warning(f"{symbol}: not enough valid data after cleaning")
+                    return None
 
-    rs = avg_gain / avg_loss.replace(0, np.nan)
-    rsi = 100 - (100 / (1 + rs))
-    latest = rsi.iloc[-1]
-    return round(float(latest) if not math.isnan(latest) else 50.0, 2)
+                logger.debug(f"{symbol}: fetched {len(df)} bars")
+                return df
 
+            except Exception as e:
+                if attempt < self.max_retries - 1:
+                    logger.debug(f"{symbol}: attempt {attempt+1} failed, retrying in {self.retry_delay}s - {str(e)}")
+                    time.sleep(self.retry_delay)
+                else:
+                    logger.error(f"{symbol}: data fetch failed after {self.max_retries} attempts - {str(e)}")
+                    return None
 
-def classify_trend(df: pd.DataFrame, sma_short: int, sma_long: int) -> str:
-    """
-    Trend via SMA crossover.
-    uptrend   : price > SMA_short > SMA_long
-    downtrend : price < SMA_short < SMA_long
-    sideways  : everything else
-    """
-    close = df["Close"]
-    sma_s = close.rolling(sma_short).mean().iloc[-1]
-    sma_l = close.rolling(sma_long).mean().iloc[-1]
-    price = close.iloc[-1]
+    def fetch_multiple(self, symbols: List[str]) -> Dict[str, pd.DataFrame]:
+        """Fetch data for multiple symbols, skip failures."""
+        data = {}
+        for symbol in symbols:
+            df = self.fetch_symbol(symbol)
+            if df is not None:
+                data[symbol] = df
 
-    if price > sma_s > sma_l:
-        return "uptrend"
-    if price < sma_s < sma_l:
-        return "downtrend"
-    return "sideways"
+        logger.info(f"Fetched {len(data)}/{len(symbols)} symbols successfully")
+        return data
 
+    def get_current_price(self, df: pd.DataFrame) -> float:
+        """Get the most recent close price."""
+        return float(df['Close'].iloc[-1])
 
-def detect_volume_spike(df: pd.DataFrame, window: int, multiplier: float) -> bool:
-    """True if today's volume exceeds rolling-mean volume × multiplier."""
-    volume = df["Volume"]
-    rolling_mean = volume.rolling(window).mean().iloc[-1]
-    current = volume.iloc[-1]
-    if rolling_mean == 0 or math.isnan(rolling_mean):
-        return False
-    return bool(current > rolling_mean * multiplier)
+    def get_volume(self, df: pd.DataFrame) -> float:
+        """Get the most recent volume."""
+        return float(df['Volume'].iloc[-1])
 
+    def get_avg_volume(self, df: pd.DataFrame, periods: int = 20) -> float:
+        """Get average volume over last N periods."""
+        return float(df['Volume'].tail(periods).mean())
 
-def calculate_atr(df: pd.DataFrame, period: int) -> float:
-    """Average True Range over `period` bars."""
-    high = df["High"]
-    low = df["Low"]
-    close = df["Close"]
-    prev_close = close.shift(1)
+    def get_price_history(self, df: pd.DataFrame, periods: int = 5) -> float:
+        """Calculate total return over last N periods as percent."""
+        if len(df) < periods + 1:
+            return 0.0
+        return float((df['Close'].iloc[-1] - df['Close'].iloc[-(periods+1)]) / df['Close'].iloc[-(periods+1)])
 
-    tr = pd.concat([
-        high - low,
-        (high - prev_close).abs(),
-        (low - prev_close).abs(),
-    ], axis=1).max(axis=1)
-
-    atr = tr.rolling(period).mean().iloc[-1]
-    return float(atr) if not math.isnan(atr) else 0.0
+    def get_spy_data(self) -> Optional[pd.DataFrame]:
+        """Fetch SPY benchmark data."""
+        return self.fetch_symbol('SPY')
 
 
-def classify_volatility(
-    df: pd.DataFrame,
-    atr_period: int,
-    high_thresh: float,
-    low_thresh: float,
-) -> str:
-    """
-    Normalized ATR (ATR / price).
-    > high_thresh → "high", < low_thresh → "low", else "medium"
-    """
-    atr = calculate_atr(df, atr_period)
-    price = df["Close"].iloc[-1]
-    if price == 0:
-        return "medium"
-    norm_atr = atr / price
-    if norm_atr >= high_thresh:
-        return "high"
-    if norm_atr <= low_thresh:
-        return "low"
-    return "medium"
+class WatchlistManager:
+    def __init__(self, config: dict):
+        self.config = config
+        self.watchlist_file = 'data/watchlist.json'
 
+    def build_watchlist(self, fetcher: MarketDataFetcher) -> List[str]:
+        """Build watchlist from core symbols + dynamic sources."""
+        symbols = set(self.config['watchlist']['core_symbols'].copy())
 
-def get_market_snapshot(symbol: str, config: dict) -> dict | None:
-    """
-    Fetch and normalize a single symbol into the standard snapshot format.
-    Returns None if data is unavailable or insufficient.
-    """
-    thresh = config["signal_thresholds"]
-    df = fetch_raw_data(symbol)
-    if df is None:
-        return None
+        if self.config['watchlist']['include_dynamic']:
+            # For MVP, just use core symbols
+            # Dynamic expansion (gainers, volume) can be added later
+            pass
 
-    try:
-        close = df["Close"]
-        price = round(float(close.iloc[-1]), 4)
-        rsi = calculate_rsi(close, thresh["rsi_period"])
-        trend = classify_trend(df, thresh["trend_sma_short"], thresh["trend_sma_long"])
-        volume_spike = detect_volume_spike(
-            df, thresh["volume_rolling_window"], thresh["volume_spike_multiplier"]
-        )
-        volatility = classify_volatility(
-            df,
-            thresh["volatility_atr_period"],
-            thresh["volatility_high_threshold"],
-            thresh["volatility_low_threshold"],
-        )
-        sma_20 = round(float(close.rolling(thresh["trend_sma_short"]).mean().iloc[-1]), 4)
-        sma_50 = round(float(close.rolling(thresh["trend_sma_long"]).mean().iloc[-1]), 4)
+        symbols = list(symbols)
+        self.save_watchlist(symbols)
+        return symbols
 
-        return {
-            "symbol": symbol,
-            "price": price,
-            "trend": trend,
-            "rsi": rsi,
-            "volatility": volatility,
-            "volume_spike": volume_spike,
-            "sma_20": sma_20,
-            "sma_50": sma_50,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
-    except Exception as exc:
-        logger.warning(f"{symbol}: snapshot computation failed — {exc}")
-        return None
+    def save_watchlist(self, symbols: List[str]):
+        """Save watchlist to JSON."""
+        try:
+            with open(self.watchlist_file, 'w') as f:
+                json.dump({'symbols': symbols, 'timestamp': datetime.now().isoformat()}, f, indent=2)
+            logger.info(f"Saved watchlist with {len(symbols)} symbols")
+        except Exception as e:
+            logger.error(f"Failed to save watchlist: {str(e)}")
 
-
-def collect_all_symbols(config: dict) -> list[dict]:
-    """
-    Collect snapshots for every symbol in the watchlist.
-    Skips symbols that return None and logs a warning.
-    """
-    snapshots = []
-    for symbol in config["watchlist"]:
-        snap = get_market_snapshot(symbol, config)
-        if snap is not None:
-            snapshots.append(snap)
-            logger.info(
-                f"{symbol}: price={snap['price']} rsi={snap['rsi']} "
-                f"trend={snap['trend']} vol={snap['volatility']} "
-                f"vol_spike={snap['volume_spike']}"
-            )
-        else:
-            logger.warning(f"{symbol}: skipped (no data)")
-    return snapshots
+    def load_watchlist(self) -> List[str]:
+        """Load watchlist from JSON if exists."""
+        try:
+            with open(self.watchlist_file, 'r') as f:
+                data = json.load(f)
+                return data.get('symbols', [])
+        except FileNotFoundError:
+            return self.config['watchlist']['core_symbols'].copy()
+        except Exception as e:
+            logger.error(f"Failed to load watchlist: {str(e)}")
+            return self.config['watchlist']['core_symbols'].copy()
