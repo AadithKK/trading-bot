@@ -1,0 +1,52 @@
+{
+  "history": [
+    {
+      "timestamp": "2026-04-14T18:16:08.831355",
+      "equity": 9515.08,
+      "cash": 9500.0,
+      "pnl": 0,
+      "win_rate": 0,
+      "trades": 0
+    },
+    {
+      "timestamp": "2026-04-14T18:17:21.174399",
+      "equity": 9515.08,
+      "cash": 9500.0,
+      "pnl": 0,
+      "win_rate": 0,
+      "trades": 0
+    },
+    {
+      "timestamp": "2026-04-14T18:18:25.224300",
+      "equity": 9515.08,
+      "cash": 9500.0,
+      "pnl": 0,
+      "win_rate": 0,
+      "trades": 0
+    },
+    {
+      "timestamp": "2026-04-14T18:37:26.978363",
+      "equity": 10733.57,
+      "cash": 10733.57,
+      "pnl": 733.57,
+      "win_rate": 66.67,
+      "trades": 3
+    },
+    {
+      "timestamp": "2026-04-15T08:21:52.111028",
+      "equity": 10733.57,
+      "cash": 10733.57,
+      "pnl": 733.57,
+      "win_rate": 66.67,
+      "trades": 3
+    }
+  ],
+  "latest": {
+    "timestamp": "2026-04-15T08:21:52.111028",
+    "equity": 10733.57,
+    "cash": 10733.57,
+    "pnl": 733.57,
+    "win_rate": 66.67,
+    "trades": 3
+  }
+}
