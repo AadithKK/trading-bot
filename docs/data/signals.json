@@ -1,0 +1,57 @@
+[
+  {
+    "symbol": "AAPL",
+    "score": 87,
+    "trend": 30,
+    "rsi": 15,
+    "momentum": 12,
+    "volume": 14,
+    "volatility": -20,
+    "relative_strength": 8,
+    "notes": "Strong uptrend, high momentum, elevated volume"
+  },
+  {
+    "symbol": "NVDA",
+    "score": 92,
+    "trend": 30,
+    "rsi": 15,
+    "momentum": 15,
+    "volume": 15,
+    "volatility": -18,
+    "relative_strength": 10,
+    "notes": "Very strong signal, excellent technicals"
+  },
+  {
+    "symbol": "MSFT",
+    "score": 78,
+    "trend": 30,
+    "rsi": 12,
+    "momentum": 10,
+    "volume": 14,
+    "volatility": -22,
+    "relative_strength": 7,
+    "notes": "Good setup, above SMA, moderate RSI"
+  },
+  {
+    "symbol": "GOOGL",
+    "score": 68,
+    "trend": 20,
+    "rsi": 8,
+    "momentum": 8,
+    "volume": 12,
+    "volatility": -15,
+    "relative_strength": 5,
+    "notes": "Weak signal, not enough momentum"
+  },
+  {
+    "symbol": "AMZN",
+    "score": 45,
+    "trend": 10,
+    "rsi": 5,
+    "momentum": 3,
+    "volume": 8,
+    "volatility": -20,
+    "relative_strength": 2,
+    "notes": "Below thresholds, skip"
+  }
+]

@@ -1,7 +1,58 @@
 {
-  "cash": 300.0,
-  "starting_balance": 300.0,
-  "open_positions": [],
-  "total_trades": 0,
-  "last_updated": "2026-04-13T00:00:00+00:00"
+  "starting_balance": 10000,
+  "equity": 10523.45,
+  "cash": 4200.5,
+  "total_pnl": 523.45,
+  "win_rate": 66.67,
+  "trades_count": 3,
+  "win_count": 2,
+  "loss_count": 1,
+  "open_positions": [
+    {
+      "symbol": "AAPL",
+      "shares": 10.5,
+      "entry_price": 185.5,
+      "entry_date": "2026-04-14T18:28:14.476018",
+      "unrealized_pnl": 125.75
+    },
+    {
+      "symbol": "NVDA",
+      "shares": 5.25,
+      "entry_price": 875.3,
+      "entry_date": "2026-04-12T18:28:14.476045",
+      "unrealized_pnl": 45.2
+    }
+  ],
+  "closed_positions": [
+    {
+      "symbol": "MSFT",
+      "shares": 8,
+      "entry_price": 420.15,
+      "exit_price": 428.5,
+      "entry_date": "2026-04-09T18:28:14.476050",
+      "exit_date": "2026-04-11T18:28:14.476053",
+      "pnl": 66.8,
+      "reason": "take_profit"
+    },
+    {
+      "symbol": "TSLA",
+      "shares": 2,
+      "entry_price": 245.6,
+      "exit_price": 240.3,
+      "entry_date": "2026-04-10T18:28:14.476055",
+      "exit_date": "2026-04-12T18:28:14.476057",
+      "pnl": -10.6,
+      "reason": "stop_loss"
+    },
+    {
+      "symbol": "META",
+      "shares": 6.5,
+      "entry_price": 480.25,
+      "exit_price": 495.8,
+      "entry_date": "2026-04-11T18:28:14.476059",
+      "exit_date": "2026-04-14T18:28:14.476061",
+      "pnl": 100.58,
+      "reason": "take_profit"
+    }
+  ]
 }

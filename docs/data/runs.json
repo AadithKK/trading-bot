@@ -1,0 +1,122 @@
+[
+  {
+    "timestamp": "2026-04-04T18:28:14.476065",
+    "portfolio_equity": 9952.76305852348,
+    "trades_opened": 1,
+    "trades_closed": 2,
+    "signals_generated": 10,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-05T17:28:14.476065",
+    "portfolio_equity": 9999.272971624125,
+    "trades_opened": 3,
+    "trades_closed": 2,
+    "signals_generated": 9,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-06T16:28:14.476065",
+    "portfolio_equity": 10105.884990613287,
+    "trades_opened": 3,
+    "trades_closed": 1,
+    "signals_generated": 14,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-07T15:28:14.476065",
+    "portfolio_equity": 10222.688512872637,
+    "trades_opened": 3,
+    "trades_closed": 1,
+    "signals_generated": 13,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-08T14:28:14.476065",
+    "portfolio_equity": 10168.151280068883,
+    "trades_opened": 1,
+    "trades_closed": 0,
+    "signals_generated": 9,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-09T13:28:14.476065",
+    "portfolio_equity": 10196.470543751298,
+    "trades_opened": 0,
+    "trades_closed": 0,
+    "signals_generated": 7,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-10T12:28:14.476065",
+    "portfolio_equity": 10221.773888222699,
+    "trades_opened": 1,
+    "trades_closed": 0,
+    "signals_generated": 14,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-11T11:28:14.476065",
+    "portfolio_equity": 10237.11211217192,
+    "trades_opened": 1,
+    "trades_closed": 1,
+    "signals_generated": 7,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-12T10:28:14.476065",
+    "portfolio_equity": 10212.070733098728,
+    "trades_opened": 0,
+    "trades_closed": 0,
+    "signals_generated": 7,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-13T09:28:14.476065",
+    "portfolio_equity": 10263.846883840779,
+    "trades_opened": 3,
+    "trades_closed": 2,
+    "signals_generated": 5,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-14T08:28:14.476065",
+    "portfolio_equity": 10245.27580743674,
+    "trades_opened": 3,
+    "trades_closed": 1,
+    "signals_generated": 8,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-15T07:28:14.476065",
+    "portfolio_equity": 10311.349146717763,
+    "trades_opened": 1,
+    "trades_closed": 1,
+    "signals_generated": 8,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-16T06:28:14.476065",
+    "portfolio_equity": 10253.203065827704,
+    "trades_opened": 0,
+    "trades_closed": 0,
+    "signals_generated": 11,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-17T05:28:14.476065",
+    "portfolio_equity": 10183.565073397245,
+    "trades_opened": 1,
+    "trades_closed": 2,
+    "signals_generated": 12,
+    "status": "completed"
+  },
+  {
+    "timestamp": "2026-04-18T04:28:14.476065",
+    "portfolio_equity": 10278.181921803907,
+    "trades_opened": 2,
+    "trades_closed": 1,
+    "signals_generated": 12,
+    "status": "completed"
+  }
+]
